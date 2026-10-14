@@ -8,7 +8,7 @@ use crate::protocol::{
 use crate::tls::make_server_config;
 use anyhow::{Context, Result};
 use quinn::{Connection, RecvStream, SendStream};
-use std::net::{SocketAddr, ToSocketAddrs};
+use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpStream, UdpSocket};
