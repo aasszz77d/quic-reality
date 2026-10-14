@@ -44,7 +44,8 @@ pub async fn run(cfg: Config) -> Result<()> {
     } else {
         None
     };
-    let endpoint = create_server_endpoint(listen, server_config, pw).await?;
+    let dest_opt = if dest.is_empty() { None } else { Some(dest.as_str()) };
+    let endpoint = create_server_endpoint(listen, server_config, pw, dest_opt).await?;
 
     while let Some(connecting) = endpoint.accept().await {
         let short_id = short_id.clone();

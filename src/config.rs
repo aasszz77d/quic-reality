@@ -48,10 +48,17 @@ fn default_server_name() -> String {
 pub struct LocalConfig {
     #[serde(default = "default_socks")]
     pub socks: String,
+    /// HTTP CONNECT proxy listen address
+    #[serde(default = "default_http")]
+    pub http: String,
 }
 
 fn default_socks() -> String {
     "127.0.0.1:1080".to_string()
+}
+
+fn default_http() -> String {
+    "127.0.0.1:8080".to_string()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -160,6 +167,7 @@ server_name = "www.cloudflare.com"
 
 [local]
 socks = "127.0.0.1:1080"
+http = "127.0.0.1:8080"
 
 [obfuscation]
 type = "salamander"

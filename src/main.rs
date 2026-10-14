@@ -15,7 +15,7 @@ use tracing::info;
 use tracing_subscriber::EnvFilter;
 
 #[derive(Parser, Debug)]
-#[command(name = "quic-reality", about = "QUIC + Reality stealth proxy v0.2")]
+#[command(name = "quic-reality", about = "QUIC + Reality stealth proxy v0.3")]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -60,14 +60,14 @@ async fn main() -> Result<()> {
                     if cfg.reality.private_key.is_empty() {
                         bail!("server needs reality.private_key");
                     }
-                    info!("quic-reality server v0.2");
+                    info!("quic-reality server v0.3");
                     server::run(cfg).await?;
                 }
                 Mode::Client => {
                     if cfg.reality.public_key.is_empty() || cfg.server.is_empty() {
                         bail!("client needs public_key and server");
                     }
-                    info!("quic-reality client v0.2");
+                    info!("quic-reality client v0.3");
                     client::run(cfg).await?;
                 }
             }
