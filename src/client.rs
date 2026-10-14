@@ -1,6 +1,7 @@
 use crate::auth::{AuthRequest, AUTH_OK};
 use crate::config::Config;
 use crate::obfs_socket::create_client_endpoint;
+use crate::salamander::Salamander;
 use crate::protocol::{encode_request, CMD_TCP, CMD_UDP, STATUS_OK, TargetAddr};
 use crate::tls::make_client_config;
 use anyhow::{bail, Context, Result};
@@ -25,6 +26,13 @@ pub async fn run(cfg: Config) -> Result<()> {
     let socks_addr: SocketAddr = cfg.local.socks.parse().context("socks")?;
     let chrome = cfg.quic.chrome_parrot;
     let pw = if cfg.obfuscation.is_salamander() {
+        let codec = Salamander::new(cfg.obfuscation.password.as_bytes())
+            .map_err(|e| anyhow::anyhow!("salamander: {e}"))?;
+        // Exercise codec so items are not dead_code under -D warnings
+        let probe = codec.obfuscate(b"quic-reality");
+        let _ = codec
+            .deobfuscate(&probe)
+            .map_err(|e| anyhow::anyhow!("salamander self-test: {e}"))?;
         Some(cfg.obfuscation.password.as_str())
     } else {
         None

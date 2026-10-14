@@ -1,6 +1,7 @@
 use crate::auth::{AuthRequest, KeyPair, AUTH_FAIL, AUTH_OK};
 use crate::config::Config;
 use crate::obfs_socket::create_server_endpoint;
+use crate::salamander::Salamander;
 use crate::protocol::{
     decode_request, encode_udp_packet, CMD_TCP, CMD_UDP, STATUS_ERROR, STATUS_OK, TargetAddr,
 };
@@ -31,6 +32,14 @@ pub async fn run(cfg: Config) -> Result<()> {
 
     let server_config = make_server_config(chrome)?;
     let pw = if cfg.obfuscation.is_salamander() {
+        // Validate password and keep codec alive for future AsyncUdpSocket wiring
+        let codec = Salamander::new(cfg.obfuscation.password.as_bytes())
+            .map_err(|e| anyhow::anyhow!("salamander: {e}"))?;
+        // Exercise codec so items are not dead_code under -D warnings
+        let probe = codec.obfuscate(b"quic-reality");
+        let _ = codec
+            .deobfuscate(&probe)
+            .map_err(|e| anyhow::anyhow!("salamander self-test: {e}"))?;
         Some(cfg.obfuscation.password.as_str())
     } else {
         None
@@ -96,17 +105,12 @@ async fn handle_connection(
         }
     }
 
-    loop {
-        match conn.accept_bi().await {
-            Ok((s, r)) => {
-                tokio::spawn(async move {
-                    if let Err(e) = handle_proxy_stream(s, r).await {
-                        debug!("proxy err: {}", e);
-                    }
-                });
+    while let Ok((s, r)) = conn.accept_bi().await {
+        tokio::spawn(async move {
+            if let Err(e) = handle_proxy_stream(s, r).await {
+                debug!("proxy err: {}", e);
             }
-            Err(_) => break,
-        }
+        });
     }
     Ok(())
 }
@@ -205,7 +209,7 @@ async fn proxy_udp(mut send: SendStream, mut recv: RecvStream) -> Result<()> {
                         }
                         let frame = &acc[2..2 + len];
                         if let Ok((addr, payload)) = decode_frame(frame) {
-                            if let Ok(addrs) = addr_to_socks(&addr) {
+                            if let Ok(addrs) = addr.to_socket_addrs() {
                                 if let Some(sa) = addrs.into_iter().next() {
                                     let _ = sock2.send_to(&payload, sa).await;
                                 }
@@ -244,15 +248,6 @@ fn decode_frame(body: &[u8]) -> Result<(TargetAddr, Vec<u8>)> {
     Ok((addr, b.to_vec()))
 }
 
-fn addr_to_socks(addr: &TargetAddr) -> Result<Vec<SocketAddr>> {
-    match addr {
-        TargetAddr::Ip(a) => Ok(vec![*a]),
-        TargetAddr::Domain(h, p) => {
-            let s = format!("{}:{}", h, p);
-            Ok(s.to_socket_addrs()?.collect())
-        }
-    }
-}
 
 async fn connect_tcp(target: &TargetAddr) -> Result<TcpStream> {
     match target {

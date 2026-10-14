@@ -120,8 +120,6 @@ pub fn decode_request(data: &[u8]) -> Result<(u8, TargetAddr)> {
     Ok((cmd, addr))
 }
 
-/// UDP packet framing over the QUIC stream (after STATUS_OK):
-///   u16 be length | address | payload
 pub fn encode_udp_packet(addr: &TargetAddr, payload: &[u8]) -> BytesMut {
     let mut inner = BytesMut::new();
     addr.encode(&mut inner);
@@ -132,15 +130,3 @@ pub fn encode_udp_packet(addr: &TargetAddr, payload: &[u8]) -> BytesMut {
     out
 }
 
-pub fn decode_udp_packet(data: &[u8]) -> Result<(TargetAddr, Vec<u8>)> {
-    if data.len() < 2 {
-        bail!("short udp frame");
-    }
-    let len = u16::from_be_bytes([data[0], data[1]]) as usize;
-    if data.len() < 2 + len {
-        bail!("incomplete udp frame");
-    }
-    let mut body = &data[2..2 + len];
-    let addr = TargetAddr::decode(&mut body)?;
-    Ok((addr, body.to_vec()))
-}
