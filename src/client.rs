@@ -268,7 +268,6 @@ async fn socks_udp_loop(udp: Arc<UdpSocket>, conn: Arc<Connection>) -> Result<()
         let conn = Arc::clone(&conn);
         let udp = Arc::clone(&udp);
         let payload = payload.to_vec();
-        let target = target;
         tokio::spawn(async move {
             if let Err(e) = udp_exchange(conn, udp, client, target, payload).await {
                 debug!("udp exchange: {}", e);
