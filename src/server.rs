@@ -70,7 +70,7 @@ async fn handle_connection(
     let n = recv.read(&mut buf).await.context("read auth")?.unwrap_or(0);
     if n == 0 {
         let _ = send.write_all(&[AUTH_FAIL]).await;
-        let _ = send.finish().await;
+        let _ = send.finish();
         if !dest.is_empty() {
             info!("empty auth → dest fallback path for {}", remote);
         }
@@ -80,13 +80,13 @@ async fn handle_connection(
     match AuthRequest::parse(&buf[..n]).and_then(|r| r.verify(short_id, public)) {
         Ok(()) => {
             send.write_all(&[AUTH_OK]).await?;
-            send.finish().await?;
+            let _ = send.finish();
             info!("auth ok from {}", remote);
         }
         Err(e) => {
             warn!("auth fail from {}: {}", remote, e);
             let _ = send.write_all(&[AUTH_FAIL]).await;
-            let _ = send.finish().await;
+            let _ = send.finish();
             if !dest.is_empty() {
                 info!("auth fail → dest fallback intent for {} → {}", remote, dest);
                 // Full transparent UDP relay requires accepting raw packets before
@@ -122,7 +122,7 @@ async fn handle_proxy_stream(mut send: SendStream, mut recv: RecvStream) -> Resu
         Ok(v) => v,
         Err(e) => {
             let _ = send.write_all(&[STATUS_ERROR]).await;
-            let _ = send.finish().await;
+            let _ = send.finish();
             return Err(e);
         }
     };
@@ -132,7 +132,7 @@ async fn handle_proxy_stream(mut send: SendStream, mut recv: RecvStream) -> Resu
         CMD_UDP => proxy_udp(send, recv).await,
         c => {
             let _ = send.write_all(&[STATUS_ERROR]).await;
-            let _ = send.finish().await;
+            let _ = send.finish();
             anyhow::bail!("unknown cmd {}", c)
         }
     }
@@ -148,7 +148,7 @@ async fn proxy_tcp(mut send: SendStream, mut recv: RecvStream, target: TargetAdd
         Err(e) => {
             warn!("tcp {:?}: {}", target, e);
             let _ = send.write_all(&[STATUS_ERROR]).await;
-            let _ = send.finish().await;
+            let _ = send.finish();
             return Err(e);
         }
     };
@@ -174,7 +174,7 @@ async fn proxy_tcp(mut send: SendStream, mut recv: RecvStream, target: TargetAdd
             }
             send.write_all(&buf[..n]).await?;
         }
-        let _ = send.finish().await;
+        let _ = send.finish();
         Ok::<(), anyhow::Error>(())
     };
     tokio::select! {

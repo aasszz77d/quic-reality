@@ -49,7 +49,7 @@ pub async fn run(cfg: Config) -> Result<()> {
     let (mut send, mut recv) = conn.open_bi().await?;
     let auth_pkt = AuthRequest::build(&short_id, &public)?;
     send.write_all(&auth_pkt).await?;
-    send.finish().await?;
+    let _ = send.finish();
     let mut resp = [0u8; 1];
     let n = recv.read(&mut resp).await?.unwrap_or(0);
     if n != 1 || resp[0] != AUTH_OK {
@@ -153,7 +153,7 @@ async fn relay(tcp: TcpStream, mut qs: quinn::SendStream, mut qr: quinn::RecvStr
             }
             qs.write_all(&buf[..n]).await?;
         }
-        let _ = qs.finish().await;
+        let _ = qs.finish();
         Ok::<(), anyhow::Error>(())
     };
     let s2c = async {

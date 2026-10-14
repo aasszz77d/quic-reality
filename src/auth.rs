@@ -23,7 +23,7 @@ pub const AUTH_MAGIC: &[u8] = b"QR01"; // quic-reality v0.1
 pub const SHORT_ID_MAX: usize = 16;
 pub const TIMESTAMP_TOLERANCE_SECS: i64 = 120; // ±2 minutes
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct KeyPair {
     pub private: StaticSecret,
     pub public: PublicKey,
