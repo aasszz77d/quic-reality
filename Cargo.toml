@@ -1,6 +1,6 @@
 [package]
 name = "quic-reality"
-version = "0.2.0"
+version = "0.1.0"
 edition = "2021"
 description = "QUIC + Reality stealth proxy: hy2 speed + Reality camouflage + Salamander + UDP"
 
