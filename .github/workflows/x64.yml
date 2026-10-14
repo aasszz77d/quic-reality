@@ -41,7 +41,7 @@ jobs:
       - run: |
           mkdir -p dist
           ls target/x86_64-unknown-linux-musl/release/
-          cp target/x86_64-unknown-linux-musl/release/* dist/quic–reality-linux-x86_64
+          cp target/x86_64-unknown-linux-musl/release/quic-reality dist/quic–reality-linux-x86_64
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
